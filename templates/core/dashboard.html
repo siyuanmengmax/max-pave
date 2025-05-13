@@ -1,5 +1,6 @@
 <!-- templates/core/dashboard.html -->
 {% extends 'base.html' %}
+{% load mathfilters %}
 
 {% block title %}Pavement Management Dashboard{% endblock %}
 
@@ -67,13 +68,13 @@
                 <div class="progress" style="height: 30px;">
                     {% with total=pci_good|add:pci_fair|add:pci_poor %}
                     {% if total > 0 %}
-                    <div class="progress-bar bg-success" style="width: {% if total > 0 %}{{ pci_good|floatformat:0 }}{% else %}0{% endif %}%">
+                    <div class="progress-bar bg-success" style="width: {% widthratio pci_good total 100 %}%">
                         Good ({{ pci_good }})
                     </div>
-                    <div class="progress-bar bg-warning" style="width: {{ pci_fair|mul:100|div:total }}%">
+                    <div class="progress-bar bg-warning" style="width: {% widthratio pci_fair total 100 %}%">
                         Fair ({{ pci_fair }})
                     </div>
-                    <div class="progress-bar bg-danger" style="width: {{ pci_poor|mul:100|div:total }}%">
+                    <div class="progress-bar bg-danger" style="width: {% widthratio pci_poor total 100 %}%">
                         Poor ({{ pci_poor }})
                     </div>
                     {% else %}
