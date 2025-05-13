@@ -1,0 +1,163 @@
+<!-- templates/core/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Pavement Management Dashboard{% endblock %}
+
+{% block content %}
+<h1>Pavement Management Dashboard</h1>
+
+<div class="row mt-4">
+    <!-- Inventory Stats -->
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5>Road Inventory</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ total_roads }}</h3>
+                <p>Road Sections</p>
+                <hr>
+                <h3>{{ total_length|floatformat:1 }} m</h3>
+                <p>Total Length</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Stats -->
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-header bg-info text-white">
+                <h5>Condition Assessments</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ total_assessments }}</h3>
+                <p>Total Assessments</p>
+                <hr>
+                <h3>{{ avg_pci|floatformat:1 }}</h3>
+                <p>Average PCI Score</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Stats -->
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-header bg-success text-white">
+                <h5>Maintenance Activities</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ planned_maintenance }}</h3>
+                <p>Planned Maintenance</p>
+                <hr>
+                <h3>{{ in_progress_maintenance }}</h3>
+                <p>In Progress</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PCI Distribution -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>PCI Score Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress" style="height: 30px;">
+                    {% with total=pci_good|add:pci_fair|add:pci_poor %}
+                    {% if total > 0 %}
+                    <div class="progress-bar bg-success" style="width: {{ pci_good|mul:100|div:total }}%">
+                        Good ({{ pci_good }})
+                    </div>
+                    <div class="progress-bar bg-warning" style="width: {{ pci_fair|mul:100|div:total }}%">
+                        Fair ({{ pci_fair }})
+                    </div>
+                    <div class="progress-bar bg-danger" style="width: {{ pci_poor|mul:100|div:total }}%">
+                        Poor ({{ pci_poor }})
+                    </div>
+                    {% else %}
+                    <div class="progress-bar bg-secondary" style="width: 100%">
+                        No data available
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'analyze-image' %}" class="btn btn-primary">Upload Assessment Image</a>
+                    <a href="{% url 'assessment-list' %}" class="btn btn-info">View All Assessments</a>
+                    <a href="/admin/" class="btn btn-secondary">Admin Panel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent data and upcoming activities -->
+<div class="row">
+    <!-- Recent Assessments -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Recent Assessments</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_assessments %}
+                <div class="list-group">
+                    {% for assessment in recent_assessments %}
+                    <a href="{% url 'assessment-detail' assessment.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ assessment.road_section }}</h6>
+                            <small>{{ assessment.assessment_date }}</small>
+                        </div>
+                        <p class="mb-1">PCI: {{ assessment.pci }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center">No assessments found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Maintenance -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Upcoming Maintenance</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_maintenance %}
+                <div class="list-group">
+                    {% for maintenance in upcoming_maintenance %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ maintenance.road_section }}</h6>
+                            <small>{{ maintenance.planned_date }}</small>
+                        </div>
+                        <p class="mb-1">{{ maintenance.maintenance_type }}</p>
+                        <small class="text-muted">
+                            Status: {{ maintenance.get_status_display }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center">No upcoming maintenance activities.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

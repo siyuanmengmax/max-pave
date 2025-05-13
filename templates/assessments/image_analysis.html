@@ -1,0 +1,49 @@
+<!-- templates/assessments/image_analysis.html -->
+{% extends 'base.html' %}
+
+{% block title %}Upload Pavement Image{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2>Upload Pavement Image for Analysis</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.road_section.id_for_label }}" class="form-label">Road Section</label>
+                        {{ form.road_section.errors }}
+                        {{ form.road_section|add_class:"form-control" }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">Pavement Image</label>
+                        {{ form.image.errors }}
+                        {{ form.image|add_class:"form-control" }}
+                        <div class="form-text">Upload a clear image of the pavement surface for analysis.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.assessment_date.id_for_label }}" class="form-label">Assessment Date</label>
+                        {{ form.assessment_date.errors }}
+                        {{ form.assessment_date|add_class:"form-control" }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes.errors }}
+                        {{ form.notes|add_class:"form-control" }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+                    <a href="{% url 'assessment-list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

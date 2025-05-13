@@ -1,5 +1,6 @@
 # assessments/forms.py
 from django import forms
+from inventory.models import RoadSection  # Add this import
 from .models import ConditionAssessment, AssessmentMethod
 
 class ImageUploadForm(forms.Form):

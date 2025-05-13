@@ -1,0 +1,83 @@
+<!-- templates/assessments/conditionassessment_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Pavement Assessments{% endblock %}
+
+{% block content %}
+<h1>Pavement Condition Assessments</h1>
+
+{% if object_list %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Road Section</th>
+                <th>Date</th>
+                <th>PCI Score</th>
+                <th>Method</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assessment in object_list %}
+            <tr>
+                <td>{{ assessment.road_section }}</td>
+                <td>{{ assessment.assessment_date }}</td>
+                <td>
+                    {% if assessment.pci >= 80 %}
+                    <span class="badge bg-success">{{ assessment.pci }}</span>
+                    {% elif assessment.pci >= 50 %}
+                    <span class="badge bg-warning">{{ assessment.pci }}</span>
+                    {% else %}
+                    <span class="badge bg-danger">{{ assessment.pci }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ assessment.assessment_method }}</td>
+                <td>
+                    <a href="{% url 'assessment-detail' assessment.id %}" class="btn btn-sm btn-primary">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1">&laquo; First</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    No assessments found. <a href="{% url 'analyze-image' %}" class="alert-link">Upload an image</a> to create one.
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{% url 'analyze-image' %}" class="btn btn-success">Upload New Assessment</a>
+</div>
+{% endblock %}
