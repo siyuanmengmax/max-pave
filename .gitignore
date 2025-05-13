@@ -1,0 +1,30 @@
+# Dataset
+dataset/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+
+# Output files
+output/
+
+# Backup files
+backup/
+
+# Images
+images/
