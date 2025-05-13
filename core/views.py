@@ -1,6 +1,7 @@
 # core/views.py
 from django.shortcuts import render
 from django.views.generic import TemplateView
+from django.db import models  # 添加这行
 from inventory.models import RoadSection
 from assessments.models import ConditionAssessment
 from maintenance.models import MaintenanceActivity
@@ -17,6 +18,8 @@ class DashboardView(TemplateView):
         # Road inventory stats
         context['total_roads'] = RoadSection.objects.count()
         context['total_length'] = RoadSection.objects.aggregate(total=models.Sum('length'))['total'] or 0
+
+
 
         # Assessment stats
         context['total_assessments'] = ConditionAssessment.objects.count()

@@ -67,7 +67,7 @@
                 <div class="progress" style="height: 30px;">
                     {% with total=pci_good|add:pci_fair|add:pci_poor %}
                     {% if total > 0 %}
-                    <div class="progress-bar bg-success" style="width: {{ pci_good|mul:100|div:total }}%">
+                    <div class="progress-bar bg-success" style="width: {% if total > 0 %}{{ pci_good|floatformat:0 }}{% else %}0{% endif %}%">
                         Good ({{ pci_good }})
                     </div>
                     <div class="progress-bar bg-warning" style="width: {{ pci_fair|mul:100|div:total }}%">
