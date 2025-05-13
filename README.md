@@ -45,17 +45,16 @@ Max-Pave is a comprehensive Django-based pavement management system that combine
 
 3. Install dependencies
    ```bash
+   pip install -r requirements.txt
+   ```
+4. Set up the database
+   ```bash
    # Generate migration files based on model changes
    python manage.py makemigrations
    
    # Apply migrations to the database
    python manage.py migrate
-   ```
-
-4. Set up the database
-   ```bash
-   python manage.py migrate
-   ```
+    ```
 
 5. Load sample data (optional)
    ```bash
