@@ -90,7 +90,7 @@ The system consists of several Django apps with specific responsibilities:
 - **inventory**: Road section management
 - **assessments**: Condition assessment and image analysis
 - **maintenance**: Maintenance planning and tracking
-- **reports**: Reporting functionality (placeholder for future expansion)
+- **reports**: Reporting functionality
 
 ## Future Enhancements
 
