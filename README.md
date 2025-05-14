@@ -2,6 +2,10 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+## System Overview
+
+![Max-Pave Dashboard](/docs/images/dashboard.png)
+*Dashboard showing pavement network overview*
 Max-Pave is a comprehensive Django-based pavement management system that combines traditional infrastructure management with computer vision for automated road condition assessment. This system helps municipalities, transportation departments, and contractors efficiently manage road infrastructure maintenance planning.
 
 ## Features
