@@ -26,5 +26,5 @@ output/
 # Backup files
 backup/
 
-# Images
-images/
+## Images
+#images/
