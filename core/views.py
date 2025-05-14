@@ -7,6 +7,7 @@ from assessments.models import ConditionAssessment
 from maintenance.models import MaintenanceActivity
 from django.db.models import Avg, Count, Q
 import datetime
+from reports.models import Report
 
 
 class DashboardView(TemplateView):
@@ -43,5 +44,14 @@ class DashboardView(TemplateView):
             planned_date__gte=today,
             status__in=['planned', 'scheduled']
         ).order_by('planned_date')[:5]
+
+        # 添加报告数据
+        try:
+            # 尝试导入Report模型并获取最近的报告
+            from reports.models import Report
+            context['recent_reports'] = Report.objects.all()[:5]
+        except ImportError:
+            # 如果报告应用未安装，则跳过
+            pass
 
         return context

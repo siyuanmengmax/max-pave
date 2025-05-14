@@ -1,0 +1,434 @@
+<!-- templates/reports/report_preview.html -->
+{% extends 'base.html' %}
+{% load mathfilters %}
+
+{% block title %}Report Preview - {{ object.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>{{ object.title }}</h1>
+        <div class="btn-group">
+            <a href="{% url 'download_report_pdf' object.id %}" class="btn btn-primary">Download PDF</a>
+            <a href="{% url 'export_report_excel' object.id %}" class="btn btn-success">Export Excel</a>
+            <a href="{% url 'report_list' %}" class="btn btn-secondary">Back to Reports</a>
+        </div>
+    </div>
+    <p class="lead">{{ object.get_report_type_display }} | Created: {{ object.created_at|date:"F d, Y H:i" }}</p>
+    {% if object.description %}<p>{{ object.description }}</p>{% endif %}
+</div>
+
+{% if report_data %}
+    {% if object.report_type == 'condition' %}
+        <!-- Condition Assessment Report Preview -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Condition Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <h3>{{ report_data.stats.count }}</h3>
+                                <p>Assessments</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3>{{ report_data.stats.avg_pci|floatformat:1 }}</h3>
+                                <p>Average PCI</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3>{{ report_data.stats.pci_good }}</h3>
+                                <p>Good Condition</p>
+                            </div>
+                        </div>
+
+                        <!-- PCI Distribution Chart -->
+                        <div class="mt-4">
+                            <h5>PCI Distribution</h5>
+                            <div class="progress" style="height: 30px;">
+                                {% with total=report_data.stats.pci_good|add:report_data.stats.pci_fair|add:report_data.stats.pci_poor %}
+                                {% if total > 0 %}
+                                <div class="progress-bar bg-success" style="width: {% widthratio report_data.stats.pci_good total 100 %}%">
+                                    Good ({{ report_data.stats.pci_good }})
+                                </div>
+                                <div class="progress-bar bg-warning" style="width: {% widthratio report_data.stats.pci_fair total 100 %}%">
+                                    Fair ({{ report_data.stats.pci_fair }})
+                                </div>
+                                <div class="progress-bar bg-danger" style="width: {% widthratio report_data.stats.pci_poor total 100 %}%">
+                                    Poor ({{ report_data.stats.pci_poor }})
+                                </div>
+                                {% else %}
+                                <div class="progress-bar bg-secondary" style="width: 100%">
+                                    No data available
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Date Range</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if report_data.date_range.start and report_data.date_range.end %}
+                        <p><strong>From:</strong> {{ report_data.date_range.start|date:"F d, Y" }}</p>
+                        <p><strong>To:</strong> {{ report_data.date_range.end|date:"F d, Y" }}</p>
+                        {% else %}
+                        <p>All available assessments</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Road Section Assessments -->
+        {% if report_data.road_data %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Road Section Assessments</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Road Section</th>
+                                <th>Latest PCI</th>
+                                <th>Avg PCI</th>
+                                <th>Latest Assessment</th>
+                                <th>Assessment Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for road in report_data.road_data %}
+                            <tr>
+                                <td>{{ road.road.name }} ({{ road.road.road_id }})</td>
+                                <td>
+                                    {% if road.latest_pci >= 80 %}
+                                    <span class="badge bg-success">{{ road.latest_pci }}</span>
+                                    {% elif road.latest_pci >= 50 %}
+                                    <span class="badge bg-warning">{{ road.latest_pci }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ road.latest_pci }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ road.avg_pci|floatformat:1 }}</td>
+                                <td>{{ road.latest_date|date:"Y-m-d" }}</td>
+                                <td>{{ road.assessment_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Assessments -->
+        {% if report_data.assessments %}
+        <div class="card">
+            <div class="card-header">
+                <h5>Assessment Data</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Road Section</th>
+                                <th>Date</th>
+                                <th>PCI</th>
+                                <th>Cracking %</th>
+                                <th>Method</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assessment in report_data.assessments|slice:":10" %}
+                            <tr>
+                                <td>{{ assessment.road_section }}</td>
+                                <td>{{ assessment.assessment_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if assessment.pci >= 80 %}
+                                    <span class="badge bg-success">{{ assessment.pci }}</span>
+                                    {% elif assessment.pci >= 50 %}
+                                    <span class="badge bg-warning">{{ assessment.pci }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ assessment.pci }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ assessment.cracking_percentage|floatformat:1 }}</td>
+                                <td>{{ assessment.assessment_method }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if report_data.assessments.count > 10 %}
+                    <p class="text-center">Showing 10 of {{ report_data.assessments.count }} assessments. Download the full report for complete data.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    {% elif object.report_type == 'maintenance' %}
+        <!-- Maintenance Planning Report Preview -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Maintenance Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <h3>{{ report_data.stats.count }}</h3>
+                                <p>Activities</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3>${{ report_data.stats.total_cost|floatformat:2 }}</h3>
+                                <p>Total Cost</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <h3>{{ report_data.stats.status_counts.planned|default:"0" }}</h3>
+                                <p>Planned Activities</p>
+                            </div>
+                        </div>
+
+                        <!-- Status Distribution -->
+                        <div class="mt-4">
+                            <h5>Status Distribution</h5>
+                            <div class="row">
+                                {% for status, label in object.STATUS_CHOICES %}
+                                    <div class="col-4 col-md-2 text-center mb-3">
+                                        <div class="p-2 rounded
+                                            {% if status == 'planned' %}bg-info
+                                            {% elif status == 'scheduled' %}bg-primary
+                                            {% elif status == 'in_progress' %}bg-warning
+                                            {% elif status == 'completed' %}bg-success
+                                            {% else %}bg-secondary
+                                            {% endif %}
+                                            text-white">
+                                            <strong>{{ report_data.stats.status_counts|get_item:status|default:"0" }}</strong>
+                                        </div>
+                                        <small>{{ label }}</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Date Range</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if report_data.date_range.start and report_data.date_range.end %}
+                        <p><strong>From:</strong> {{ report_data.date_range.start|date:"F d, Y" }}</p>
+                        <p><strong>To:</strong> {{ report_data.date_range.end|date:"F d, Y" }}</p>
+                        {% else %}
+                        <p>All available maintenance activities</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost by Maintenance Type -->
+        {% if report_data.cost_by_type %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Cost by Maintenance Type</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Maintenance Type</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type, cost in report_data.cost_by_type.items %}
+                            <tr>
+                                <td>{{ type }}</td>
+                                <td>${{ cost|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Scheduled Activities -->
+        {% if report_data.scheduled_activities %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Upcoming Activities</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Road Section</th>
+                                <th>Maintenance Type</th>
+                                <th>Status</th>
+                                <th>Planned Date</th>
+                                <th>Estimated Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in report_data.scheduled_activities|slice:":10" %}
+                            <tr>
+                                <td>{{ activity.road_section }}</td>
+                                <td>{{ activity.maintenance_type }}</td>
+                                <td>{{ activity.get_status_display }}</td>
+                                <td>{{ activity.planned_date|date:"Y-m-d" }}</td>
+                                <td>${{ activity.estimated_cost }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if report_data.scheduled_activities.count > 10 %}
+                    <p class="text-center">Showing 10 of {{ report_data.scheduled_activities.count }} scheduled activities. Download the full report for complete data.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    {% elif object.report_type == 'network' %}
+        <!-- Network Overview Report Preview -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Network Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h3>{{ report_data.stats.count }}</h3>
+                                <p>Road Sections</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3>{{ report_data.stats.total_length|floatformat:1 }} m</h3>
+                                <p>Total Length</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3>{{ report_data.stats.total_area|floatformat:1 }} m²</h3>
+                                <p>Total Area</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h3>{{ report_data.stats.avg_network_pci|floatformat:1 }}</h3>
+                                <p>Average Network PCI</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Surface Type Distribution -->
+        {% if report_data.surface_types %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Surface Type Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Surface Type</th>
+                                <th>Count</th>
+                                <th>Length (m)</th>
+                                <th>Area (m²)</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type, data in report_data.surface_types.items %}
+                            <tr>
+                                <td>{{ type }}</td>
+                                <td>{{ data.count }}</td>
+                                <td>{{ data.length|floatformat:1 }}</td>
+                                <td>{{ data.area|floatformat:1 }}</td>
+                                <td>{{ data.count|mul:100|div:report_data.stats.count|floatformat:1 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Road Sections -->
+        {% if report_data.roads %}
+        <div class="card">
+            <div class="card-header">
+                <h5>Road Sections</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Road Section</th>
+                                <th>Surface Type</th>
+                                <th>Length (m)</th>
+                                <th>Width (m)</th>
+                                <th>Latest PCI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for road in report_data.roads|slice:":10" %}
+                            <tr>
+                                <td>{{ road.name }} ({{ road.road_id }})</td>
+                                <td>{{ road.surface_type }}</td>
+                                <td>{{ road.length }}</td>
+                                <td>{{ road.width }}</td>
+                                <td>
+                                    {% if road.id in report_data.latest_assessments %}
+                                    {% with pci=report_data.latest_assessments|get_item:road.id.pci %}
+                                    {% if pci >= 80 %}
+                                    <span class="badge bg-success">{{ pci }}</span>
+                                    {% elif pci >= 50 %}
+                                    <span class="badge bg-warning">{{ pci }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ pci }}</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Assessed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if report_data.roads.count > 10 %}
+                    <p class="text-center">Showing 10 of {{ report_data.roads.count }} road sections. Download the full report for complete data.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+{% else %}
+<div class="alert alert-warning">
+    Report data not available. Try downloading the report to regenerate the data.
+</div>
+{% endif %}
+{% endblock %}

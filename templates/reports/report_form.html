@@ -1,0 +1,107 @@
+<!-- templates/reports/report_form.html -->
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Create Report{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2>Create Report</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="report_type" class="form-label">Report Type</label>
+                        <select name="report_type" id="report_type" class="form-control" required>
+                            {% for type_id, type_name in report_types %}
+                            <option value="{{ type_id }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Report Title</label>
+                        <input type="text" name="title" id="title" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Date Range</label>
+                        <div class="row">
+                            <div class="col">
+                                <input type="date" name="date_range_start" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                                <small class="form-text">Start Date</small>
+                            </div>
+                            <div class="col">
+                                <input type="date" name="date_range_end" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                                <small class="form-text">End Date</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Road Sections</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="select-all-roads">
+                            <label class="form-check-label" for="select-all-roads">
+                                Select All
+                            </label>
+                        </div>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            {% for road in road_sections %}
+                            <div class="form-check">
+                                <input class="form-check-input road-checkbox" type="checkbox" name="road_sections" value="{{ road.id }}" id="road-{{ road.id }}">
+                                <label class="form-check-label" for="road-{{ road.id }}">
+                                    {{ road.name }} ({{ road.road_id }})
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                    <a href="{% url 'report_list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Select/deselect all roads
+    document.getElementById('select-all-roads').addEventListener('change', function() {
+        var checkboxes = document.getElementsByClassName('road-checkbox');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = this.checked;
+        }
+    });
+
+    // Update report form fields based on report type
+    document.getElementById('report_type').addEventListener('change', function() {
+        var reportType = this.value;
+        var dateRangeFields = document.querySelectorAll('[name^="date_range_"]');
+        var roadSectionsField = document.querySelector('.mb-3:has(#select-all-roads)');
+
+        // Show/hide fields based on report type
+        if (reportType === 'network') {
+            // Network report doesn't need date range
+            dateRangeFields.forEach(function(field) {
+                field.parentElement.parentElement.parentElement.style.display = 'none';
+            });
+        } else {
+            dateRangeFields.forEach(function(field) {
+                field.parentElement.parentElement.parentElement.style.display = 'block';
+            });
+        }
+    });
+</script>
+{% endblock %}

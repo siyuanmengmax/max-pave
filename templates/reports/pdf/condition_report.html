@@ -1,0 +1,206 @@
+<!-- templates/reports/pdf/condition_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ report.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .header {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header .title {
+            margin: 0;
+            font-size: 24px;
+        }
+        .footer {
+            padding: 10px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+            font-size: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .summary-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .summary-item {
+            display: inline-block;
+            width: 30%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .summary-item h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .summary-item p {
+            margin: 5px 0 0;
+        }
+        .badge {
+            padding: 3px 6px;
+            border-radius: 3px;
+            color: white;
+            font-size: 10px;
+        }
+        .badge-success {
+            background-color: #2ecc71;
+        }
+        .badge-warning {
+            background-color: #f1c40f;
+        }
+        .badge-danger {
+            background-color: #e74c3c;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">{{ report.title }}</h1>
+        <p>{{ report.get_report_type_display }} | Generated: {{ timestamp|date:"F d, Y H:i" }}</p>
+    </div>
+
+    {% if report.description %}
+    <div>
+        <h3>Description</h3>
+        <p>{{ report.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="summary-box">
+        <h3>Condition Summary</h3>
+        <div>
+            <div class="summary-item">
+                <h3>{{ data.stats.count }}</h3>
+                <p>Assessments</p>
+            </div>
+            <div class="summary-item">
+                <h3>{{ data.stats.avg_pci|floatformat:1 }}</h3>
+                <p>Average PCI</p>
+            </div>
+            <div class="summary-item">
+                <h3>{{ data.stats.pci_good }}</h3>
+                <p>Good Condition</p>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h3>Date Range</h3>
+        {% if data.date_range.start and data.date_range.end %}
+        <p><strong>From:</strong> {{ data.date_range.start|date:"F d, Y" }}</p>
+        <p><strong>To:</strong> {{ data.date_range.end|date:"F d, Y" }}</p>
+        {% else %}
+        <p>All available assessments</p>
+        {% endif %}
+    </div>
+
+    {% if data.road_data %}
+    <div>
+        <h3>Road Section Assessments</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Road Section</th>
+                    <th>Latest PCI</th>
+                    <th>Avg PCI</th>
+                    <th>Latest Assessment</th>
+                    <th>Assessment Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for road in data.road_data %}
+                <tr>
+                    <td>{{ road.road.name }} ({{ road.road.road_id }})</td>
+                    <td>
+                        {% if road.latest_pci >= 80 %}
+                        <span class="badge badge-success">{{ road.latest_pci }}</span>
+                        {% elif road.latest_pci >= 50 %}
+                        <span class="badge badge-warning">{{ road.latest_pci }}</span>
+                        {% else %}
+                        <span class="badge badge-danger">{{ road.latest_pci }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ road.avg_pci|floatformat:1 }}</td>
+                    <td>{{ road.latest_date|date:"Y-m-d" }}</td>
+                    <td>{{ road.assessment_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if data.assessments %}
+    <div class="page-break">
+        <h3>Assessment Data</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Road Section</th>
+                    <th>Date</th>
+                    <th>PCI</th>
+                    <th>Cracking %</th>
+                    <th>Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in data.assessments %}
+                <tr>
+                    <td>{{ assessment.road_section }}</td>
+                    <td>{{ assessment.assessment_date|date:"Y-m-d" }}</td>
+                    <td>
+                        {% if assessment.pci >= 80 %}
+                        <span class="badge badge-success">{{ assessment.pci }}</span>
+                        {% elif assessment.pci >= 50 %}
+                        <span class="badge badge-warning">{{ assessment.pci }}</span>
+                        {% else %}
+                        <span class="badge badge-danger">{{ assessment.pci }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ assessment.cracking_percentage|floatformat:1 }}</td>
+                    <td>{{ assessment.assessment_method }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Generated by Max-Pave Pavement Management System | {{ timestamp|date:"F d, Y H:i" }}</p>
+        <p>Page <pdf:pagenumber> of <pdf:pagecount></p>
+    </div>
+</body>
+</html>

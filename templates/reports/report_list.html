@@ -1,0 +1,76 @@
+<!-- templates/reports/report_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Reports</h1>
+    <a href="{% url 'create_report' %}" class="btn btn-primary">Create New Report</a>
+</div>
+
+{% if object_list %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in object_list %}
+            <tr>
+                <td>{{ report.title }}</td>
+                <td>{{ report.get_report_type_display }}</td>
+                <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{% url 'report_detail' report.id %}" class="btn btn-sm btn-info">View</a>
+                        <a href="{% url 'download_report_pdf' report.id %}" class="btn btn-sm btn-primary">PDF</a>
+                        <a href="{% url 'export_report_excel' report.id %}" class="btn btn-sm btn-success">Excel</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1">&laquo; First</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    No reports found. <a href="{% url 'create_report' %}" class="alert-link">Create a new report</a>.
+</div>
+{% endif %}
+{% endblock %}

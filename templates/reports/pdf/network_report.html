@@ -1,0 +1,203 @@
+<!-- templates/reports/pdf/network_report.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ report.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .header {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .header .title {
+            margin: 0;
+            font-size: 24px;
+        }
+        .footer {
+            padding: 10px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+            font-size: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .summary-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .summary-item {
+            display: inline-block;
+            width: 24%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .summary-item h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .summary-item p {
+            margin: 5px 0 0;
+        }
+        .badge {
+            padding: 3px 6px;
+            border-radius: 3px;
+            color: white;
+            font-size: 10px;
+        }
+        .badge-success {
+            background-color: #2ecc71;
+        }
+        .badge-warning {
+            background-color: #f1c40f;
+        }
+        .badge-danger {
+            background-color: #e74c3c;
+        }
+        .badge-secondary {
+            background-color: #95a5a6;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">{{ report.title }}</h1>
+        <p>{{ report.get_report_type_display }} | Generated: {{ timestamp|date:"F d, Y H:i" }}</p>
+    </div>
+
+    {% if report.description %}
+    <div>
+        <h3>Description</h3>
+        <p>{{ report.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="summary-box">
+        <h3>Network Summary</h3>
+        <div>
+            <div class="summary-item">
+                <h3>{{ data.stats.count }}</h3>
+                <p>Road Sections</p>
+            </div>
+            <div class="summary-item">
+                <h3>{{ data.stats.total_length|floatformat:1 }} m</h3>
+                <p>Total Length</p>
+            </div>
+            <div class="summary-item">
+                <h3>{{ data.stats.total_area|floatformat:1 }} m²</h3>
+                <p>Total Area</p>
+            </div>
+            <div class="summary-item">
+                <h3>{{ data.stats.avg_network_pci|floatformat:1 }}</h3>
+                <p>Average Network PCI</p>
+            </div>
+        </div>
+    </div>
+
+    {% if data.surface_types %}
+    <div>
+        <h3>Surface Type Distribution</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Surface Type</th>
+                    <th>Count</th>
+                    <th>Length (m)</th>
+                    <th>Area (m²)</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for type, type_data in data.surface_types.items %}
+                <tr>
+                    <td>{{ type }}</td>
+                    <td>{{ type_data.count }}</td>
+                    <td>{{ type_data.length|floatformat:1 }}</td>
+                    <td>{{ type_data.area|floatformat:1 }}</td>
+                    <td>{{ type_data.count|floatformat:1 }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if data.roads %}
+    <div class="page-break">
+        <h3>Road Sections</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Road Section</th>
+                    <th>Surface Type</th>
+                    <th>Length (m)</th>
+                    <th>Width (m)</th>
+                    <th>Area (m²)</th>
+                    <th>Latest PCI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for road in data.roads %}
+                <tr>
+                    <td>{{ road.name }} ({{ road.road_id }})</td>
+                    <td>{{ road.surface_type }}</td>
+                    <td>{{ road.length }}</td>
+                    <td>{{ road.width }}</td>
+                    <td>{{ road.length|floatformat:1|mul:road.width|floatformat:1 }}</td>
+                    <td>
+                        {% if road.id in data.latest_assessments %}
+                        {% with assessment=data.latest_assessments|get_item:road.id %}
+                        {% if assessment.pci >= 80 %}
+                        <span class="badge badge-success">{{ assessment.pci }}</span>
+                        {% elif assessment.pci >= 50 %}
+                        <span class="badge badge-warning">{{ assessment.pci }}</span>
+                        {% else %}
+                        <span class="badge badge-danger">{{ assessment.pci }}</span>
+                        {% endif %}
+                        {% endwith %}
+                        {% else %}
+                        <span class="badge badge-secondary">Not Assessed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Generated by Max-Pave Pavement Management System | {{ timestamp|date:"F d, Y H:i" }}</p>
+        <p>Page <pdf:pagenumber> of <pdf:pagecount></p>
+    </div>
+</body>
+</html>
